@@ -1,8 +1,10 @@
 import model.PeerInformation;
 import model.PriorityQueueElement;
 
-import java.io.*;
-import java.net.Inet4Address;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -47,7 +49,7 @@ public class LamportMutualExclusion {
 
     private boolean canGoCritical() {
         assert pq.peek() != null;
-        return ((replies == peerInformationList.size()) && (pq.peek().getPeerInformation().getIpAddress().equals(this.localIpAddress)));
+        return ((replies == peerInformationList.size()) && (pq.peek().getPeerInformation().ipAddress().equals(this.localIpAddress)));
     }
 
     private void executeCS() {
@@ -61,7 +63,7 @@ public class LamportMutualExclusion {
 
         for (PeerInformation peerInformation: this.peerInformationList) {
             try (
-                    Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
+                    Socket clientSocket = new Socket(peerInformation.ipAddress(), peerInformation.port());
                     PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
             ) {
 //                String sendingString = "o\n" + 0 + "\n" + this.listeningPort + "\n" + this.localIpAddress + "\n";
@@ -205,7 +207,7 @@ public class LamportMutualExclusion {
 
                     for (PeerInformation peerInformation: peerInformationList) {
                         try (
-                                Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
+                                Socket clientSocket = new Socket(peerInformation.ipAddress(), peerInformation.port());
                                 PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
                         ) {
 //                            String sendingString = "q\n" + timeStamp.get() + "\n" + listeningPort + "\n" + localIpAddress + "\n";
@@ -215,7 +217,7 @@ public class LamportMutualExclusion {
                             output.println(listeningPort);
                             output.println(localIpAddress);
 
-                            System.out.println("Request sent to " + peerInformation.getIpAddress() + ": " + peerInformation.getPort());
+                            System.out.println("Request sent to " + peerInformation.ipAddress() + ": " + peerInformation.port());
                         } catch (IOException e) {
                             System.out.println("Error while sending...: " + e.getMessage());
                             throw new RuntimeException(e);
