@@ -22,7 +22,7 @@ public class LamportMutualExclusion {
 
     private final ServerSocket serverSocket;
 
-    private AtomicInteger timeStamp;
+    private final AtomicInteger timeStamp;
 
     private final Queue<Thread> threads;
 
@@ -148,7 +148,10 @@ public class LamportMutualExclusion {
                 new Thread(this::executeCS).start();
             }
         } else {
-            timeStamp = new AtomicInteger(Math.max(timeStamp.get(), receivedTimestamp) + 1);
+            int newTimeStamp = Math.max(timeStamp.get(), receivedTimestamp) + 1;
+            int delta = newTimeStamp - timeStamp.get();
+            timeStamp.addAndGet(delta);
+//            timeStamp = new AtomicInteger(Math.max(timeStamp.get(), receivedTimestamp) + 1);
 
             System.out.println("Got a Request from " + ipAddress + ": " + port);
 
