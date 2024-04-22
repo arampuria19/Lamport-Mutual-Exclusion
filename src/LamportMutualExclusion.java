@@ -54,7 +54,7 @@ public class LamportMutualExclusion {
 
     private boolean canGoCritical() {
         assert pq.peek() != null;
-        return ((replies == peerInformationList.size()) && (pq.peek().peerInformation().ipAddress().equals(this.localIpAddress)));
+        return ((replies == peerInformationList.size()) && (pq.peek().peerInformation().equals(new PeerInformation(this.localIpAddress, this.listeningPort))));
     }
 
     private void executeCS() {
@@ -65,6 +65,8 @@ public class LamportMutualExclusion {
             System.out.println("Error while making thread sleep for critical section: " + e.getMessage());
             throw new RuntimeException(e);
         }
+
+        System.out.println("Got Outside Critical Section!!!");
 
         for (PeerInformation peerInformation: this.peerInformationList) {
             try (
@@ -121,9 +123,6 @@ public class LamportMutualExclusion {
                     }
                 }
             }
-        } catch (IOException e) {
-            System.out.println("Error while reading the received data: " + e.getMessage());
-            throw new RuntimeException(e);
         }
 
         // Compare the received timestamps with the current timestamps
