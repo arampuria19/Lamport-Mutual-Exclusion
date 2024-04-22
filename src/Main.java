@@ -14,6 +14,8 @@ public class Main {
         System.out.print("Enter the listening port for this process: ");
         int listeningPort = scanner.nextInt();
 
+        LamportMutualExclusion lamportMutualExclusion = new LamportMutualExclusion(localIpAddress, listeningPort);
+
         System.out.print("Enter the number of peers(excluding this): ");
         int numberOfPeers = scanner.nextInt();
 
@@ -21,8 +23,6 @@ public class Main {
             System.err.print("Number of peers must be at least 1");
             return;
         }
-
-        LamportMutualExclusion lamportMutualExclusion = new LamportMutualExclusion(localIpAddress, listeningPort);
 
         for (int i=0; i<numberOfPeers; i++) {
             System.out.println("Enter the ipAddress for peer " + (i + 1) + ": ");

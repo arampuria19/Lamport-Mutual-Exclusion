@@ -33,7 +33,8 @@ public class LamportMutualExclusion {
         this.pq = new PriorityQueue<>();
 
         try {
-            this.serverSocket = new ServerSocket(listeningPort);
+            int backlog = 5;
+            this.serverSocket = new ServerSocket(listeningPort, backlog);
         } catch (IOException e) {
             System.out.println("Error creating server socket: " + e.getMessage());
             throw new RuntimeException(e);
@@ -63,8 +64,12 @@ public class LamportMutualExclusion {
                     Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
                     PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
             ) {
-                String sendingString = "o\n" + 0 + "\n" + this.listeningPort + "\n" + this.localIpAddress + "\n";
-                output.println(sendingString);
+//                String sendingString = "o\n" + 0 + "\n" + this.listeningPort + "\n" + this.localIpAddress + "\n";
+//                output.println(sendingString);
+                output.println("o");
+                output.println(0);
+                output.println(this.listeningPort);
+                output.println(this.localIpAddress);
 
                 System.out.println("Release message sent to " + peerInformation);
             } catch (IOException e) {
@@ -75,11 +80,6 @@ public class LamportMutualExclusion {
     }
 
     private void startAccept(Socket socket) throws IOException {
-        BufferedReader input = new BufferedReader(
-                new InputStreamReader(socket.getInputStream())
-        );
-
-        String receivedString = input.readLine();
 
         try {
             Thread.sleep(500);
@@ -94,7 +94,8 @@ public class LamportMutualExclusion {
         boolean isReply = false;
         boolean isReleased = false;
 
-        try (BufferedReader readerForLine = new BufferedReader(new StringReader(receivedString))) {
+
+        try (BufferedReader readerForLine = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String line;
             while((line = readerForLine.readLine()) != null) {
                 if(!line.isEmpty()) {
@@ -150,8 +151,12 @@ public class LamportMutualExclusion {
                     Socket clientSocket = new Socket(ipAddress, port);
                     PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
                     ) {
-                String sendingString = "r\n" + timeStamp.get() + "\n" + port + "\n" + ipAddress + "\n";
-                output.println(sendingString);
+//                String sendingString = "r\n" + timeStamp.get() + "\n" + port + "\n" + ipAddress + "\n";
+//                output.println(sendingString);
+                output.println("r");
+                output.println(timeStamp.get());
+                output.println(port);
+                output.println(ipAddress);
 
                 System.out.println("Reply sent to " + ipAddress + ": " + port);
             } catch (IOException e) {
@@ -164,9 +169,8 @@ public class LamportMutualExclusion {
     }
 
     public void startListening() {
-        int backlog = 5;
+        final ServerSocket finalServerSocket = serverSocket;
         Thread currentThread = new Thread(() -> {
-            final ServerSocket finalServerSocket = serverSocket;
             while(true) {
                 try {
                     startAccept(finalServerSocket.accept());
@@ -204,8 +208,12 @@ public class LamportMutualExclusion {
                                 Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
                                 PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
                         ) {
-                            String sendingString = "q\n" + timeStamp.get() + "\n" + listeningPort + "\n" + localIpAddress + "\n";
-                            output.println(sendingString);
+//                            String sendingString = "q\n" + timeStamp.get() + "\n" + listeningPort + "\n" + localIpAddress + "\n";
+//                            output.println(sendingString);
+                            output.println("q");
+                            output.println(timeStamp.get());
+                            output.println(listeningPort);
+                            output.println(localIpAddress);
 
                             System.out.println("Request sent to " + peerInformation.getIpAddress() + ": " + peerInformation.getPort());
                         } catch (IOException e) {
