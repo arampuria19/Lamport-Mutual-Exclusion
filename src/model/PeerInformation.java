@@ -1,25 +1,20 @@
 package model;
 
-public class PeerInformation {
-    private final String ipAddress;
-    private final int port;
+import java.util.Objects;
 
-    public PeerInformation(String ipAddress, int port) {
-        this.ipAddress = ipAddress;
-        this.port = port;
-    }
+public record PeerInformation(String ipAddress, int port) {
 
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public int getPort() {
-        return port;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PeerInformation that = (PeerInformation) o;
+        return port == that.port && ipAddress.equals(that.ipAddress);
     }
 
     @Override
     public String toString() {
-        return "PeerInformation{" +
+        return "{" +
                 "ipAddress='" + ipAddress + '\'' +
                 ", port=" + port +
                 '}';

@@ -1,11 +1,18 @@
 import model.PeerInformation;
 import model.PriorityQueueElement;
 
-import java.io.*;
-import java.net.Inet4Address;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LamportMutualExclusion {
@@ -15,7 +22,7 @@ public class LamportMutualExclusion {
 
     private final ServerSocket serverSocket;
 
-    private AtomicInteger timeStamp;
+    private final AtomicInteger timeStamp;
 
     private final Queue<Thread> threads;
 
@@ -47,7 +54,7 @@ public class LamportMutualExclusion {
 
     private boolean canGoCritical() {
         assert pq.peek() != null;
-        return ((replies == peerInformationList.size()) && (pq.peek().getPeerInformation().getIpAddress().equals(this.localIpAddress)));
+        return ((replies == peerInformationList.size()) && (pq.peek().peerInformation().equals(new PeerInformation(this.localIpAddress, this.listeningPort))));
     }
 
     private void executeCS() {
@@ -59,9 +66,11 @@ public class LamportMutualExclusion {
             throw new RuntimeException(e);
         }
 
+        System.out.println("Got Outside Critical Section!!!");
+
         for (PeerInformation peerInformation: this.peerInformationList) {
             try (
-                    Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
+                    Socket clientSocket = new Socket(peerInformation.ipAddress(), peerInformation.port());
                     PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
             ) {
 //                String sendingString = "o\n" + 0 + "\n" + this.listeningPort + "\n" + this.localIpAddress + "\n";
@@ -114,9 +123,6 @@ public class LamportMutualExclusion {
                     }
                 }
             }
-        } catch (IOException e) {
-            System.out.println("Error while reading the received data: " + e.getMessage());
-            throw new RuntimeException(e);
         }
 
         // Compare the received timestamps with the current timestamps
@@ -141,7 +147,10 @@ public class LamportMutualExclusion {
                 new Thread(this::executeCS).start();
             }
         } else {
-            timeStamp = new AtomicInteger(Math.max(timeStamp.get(), receivedTimestamp) + 1);
+            int newTimeStamp = Math.max(timeStamp.get(), receivedTimestamp) + 1;
+            int delta = newTimeStamp - timeStamp.get();
+            timeStamp.addAndGet(delta);
+//            timeStamp = new AtomicInteger(Math.max(timeStamp.get(), receivedTimestamp) + 1);
 
             System.out.println("Got a Request from " + ipAddress + ": " + port);
 
@@ -205,7 +214,7 @@ public class LamportMutualExclusion {
 
                     for (PeerInformation peerInformation: peerInformationList) {
                         try (
-                                Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
+                                Socket clientSocket = new Socket(peerInformation.ipAddress(), peerInformation.port());
                                 PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
                         ) {
 //                            String sendingString = "q\n" + timeStamp.get() + "\n" + listeningPort + "\n" + localIpAddress + "\n";
@@ -215,13 +224,19 @@ public class LamportMutualExclusion {
                             output.println(listeningPort);
                             output.println(localIpAddress);
 
-                            System.out.println("Request sent to " + peerInformation.getIpAddress() + ": " + peerInformation.getPort());
+                            System.out.println("Request sent to " + peerInformation.ipAddress() + ": " + peerInformation.port());
                         } catch (IOException e) {
                             System.out.println("Error while sending...: " + e.getMessage());
                             throw new RuntimeException(e);
                         }
                     }
                 } else if(option == 2) {
+                    if (pq.isEmpty()) {
+                        System.out.println("Queue is empty!");
+                        continue;
+                    }
+
+                    System.out.println("Queue is: ");
                     for (PriorityQueueElement priorityQueueElement : pq) {
                         System.out.println(priorityQueueElement);
                     }
