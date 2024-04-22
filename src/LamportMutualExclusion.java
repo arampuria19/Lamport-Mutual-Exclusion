@@ -229,6 +229,12 @@ public class LamportMutualExclusion {
                         }
                     }
                 } else if(option == 2) {
+                    if (pq.isEmpty()) {
+                        System.out.println("Queue is empty!");
+                        continue;
+                    }
+
+                    System.out.println("Queue is: ");
                     for (PriorityQueueElement priorityQueueElement : pq) {
                         System.out.println(priorityQueueElement);
                     }

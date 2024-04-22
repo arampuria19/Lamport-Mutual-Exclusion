@@ -11,7 +11,7 @@ public record PriorityQueueElement(int timeStamp,
 
     @Override
     public String toString() {
-        return "PriorityQueueElement{" +
+        return "{" +
                 "timeStamp=" + timeStamp +
                 ", peerInformation=" + peerInformation +
                 '}';
