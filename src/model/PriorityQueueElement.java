@@ -1,6 +1,6 @@
 package model;
 
-public class PriorityQueueElement {
+public class PriorityQueueElement implements Comparable<PriorityQueueElement > {
     private final int timeStamp;
     private final PeerInformation peerInformation;
 
@@ -15,6 +15,12 @@ public class PriorityQueueElement {
 
     public PeerInformation getPeerInformation() {
         return peerInformation;
+    }
+
+    @Override
+    public int compareTo(PriorityQueueElement other) {
+        // Compare this element's timestamp with the other element's timestamp
+        return Integer.compare(this.timeStamp, other.timeStamp);
     }
 
     @Override
