@@ -16,4 +16,12 @@ public class PriorityQueueElement {
     public PeerInformation getPeerInformation() {
         return peerInformation;
     }
+
+    @Override
+    public String toString() {
+        return "PriorityQueueElement{" +
+                "timeStamp=" + timeStamp +
+                ", peerInformation=" + peerInformation +
+                '}';
+    }
 }

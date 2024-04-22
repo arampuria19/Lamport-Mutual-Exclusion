@@ -16,4 +16,12 @@ public class PeerInformation {
     public int getPort() {
         return port;
     }
+
+    @Override
+    public String toString() {
+        return "PeerInformation{" +
+                "ipAddress='" + ipAddress + '\'' +
+                ", port=" + port +
+                '}';
+    }
 }

@@ -1,10 +1,8 @@
 import model.PeerInformation;
 import model.PriorityQueueElement;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
+import java.io.*;
+import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -17,7 +15,7 @@ public class LamportMutualExclusion {
 
     private final ServerSocket serverSocket;
 
-    private final AtomicInteger timeStamp;
+    private AtomicInteger timeStamp;
 
     private final Queue<Thread> threads;
 
@@ -47,7 +45,33 @@ public class LamportMutualExclusion {
     }
 
     private boolean canGoCritical() {
-        return ((replies == peerInformationList.size()) && (pq.peek().getPeerInformation().getIpAddress() == ));
+        assert pq.peek() != null;
+        return ((replies == peerInformationList.size()) && (pq.peek().getPeerInformation().getIpAddress().equals(this.localIpAddress)));
+    }
+
+    private void executeCS() {
+        System.out.println("Got Inside Critical Section!!!");
+        try {
+            Thread.sleep(10000); // sleep for 8 seconds
+        } catch (InterruptedException e) {
+            System.out.println("Error while making thread sleep for critical section: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+        for (PeerInformation peerInformation: this.peerInformationList) {
+            try (
+                    Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
+                    PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
+            ) {
+                String sendingString = "o\n" + 0 + "\n" + this.listeningPort + "\n" + this.localIpAddress + "\n";
+                output.println(sendingString);
+
+                System.out.println("Release message sent to " + peerInformation);
+            } catch (IOException e) {
+                System.out.println("Error while sending...: " + e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void startAccept(Socket socket) throws IOException {
@@ -66,6 +90,7 @@ public class LamportMutualExclusion {
 
         int receivedTimestamp = -1;
         int port = -1;
+        String ipAddress = "";
         boolean isReply = false;
         boolean isReleased = false;
 
@@ -81,8 +106,10 @@ public class LamportMutualExclusion {
                         continue;
                     } else if (receivedTimestamp == -1) {
                         receivedTimestamp = Integer.parseInt(line);
-                    } else {
+                    } else if(port == -1){
                         port = Integer.parseInt(line);
+                    } else {
+                        ipAddress = line;
                     }
                 }
             }
@@ -101,19 +128,39 @@ public class LamportMutualExclusion {
                     replies = 0;
                     pq.poll();
 
-                    new Thread(() -> {
-                        executeCS();
-                    }).start();
+                    new Thread(this::executeCS).start();
                 }
             }
         } else if(isReleased) {
             pq.poll();
             System.out.println("Got a Release message!");
             if(canGoCritical()) {
-                replies =
+                replies = 0;
+                pq.poll();
+                new Thread(this::executeCS).start();
             }
+        } else {
+            timeStamp = new AtomicInteger(Math.max(timeStamp.get(), receivedTimestamp) + 1);
 
+            System.out.println("Got a Request from " + ipAddress + ": " + port);
+
+            pq.add(new PriorityQueueElement(timeStamp.get(), new PeerInformation(ipAddress, port)));
+
+            try (
+                    Socket clientSocket = new Socket(ipAddress, port);
+                    PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
+                    ) {
+                String sendingString = "r\n" + timeStamp.get() + "\n" + port + "\n" + ipAddress + "\n";
+                output.println(sendingString);
+
+                System.out.println("Reply sent to " + ipAddress + ": " + port);
+            } catch (IOException e) {
+                System.out.println("Error while sending...: " + e.getMessage());
+                throw new RuntimeException(e);
+            }
         }
+
+        socket.close();
     }
 
     public void startListening() {
@@ -133,5 +180,63 @@ public class LamportMutualExclusion {
         currentThread.start();
         threads.add(currentThread);
     }
+
+    public void startEventGeneration() {
+
+        Thread currentThread = new Thread(() -> {
+            while(true) {
+                Scanner scanner = new Scanner(System.in);
+
+                System.out.print("Enter 1 to request Critical Section, or \n" +
+                        "2 to print current queue or \n" +
+                        "3 to exit the code.\n");
+
+                int option = scanner.nextInt();
+
+                if (option == 1) {
+                    // Try to enter the critical section
+                    timeStamp.addAndGet(1);
+
+                    pq.add(new PriorityQueueElement(timeStamp.get(), new PeerInformation(localIpAddress, listeningPort)));
+
+                    for (PeerInformation peerInformation: peerInformationList) {
+                        try (
+                                Socket clientSocket = new Socket(peerInformation.getIpAddress(), peerInformation.getPort());
+                                PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
+                        ) {
+                            String sendingString = "q\n" + timeStamp.get() + "\n" + listeningPort + "\n" + localIpAddress + "\n";
+                            output.println(sendingString);
+
+                            System.out.println("Request sent to " + peerInformation.getIpAddress() + ": " + peerInformation.getPort());
+                        } catch (IOException e) {
+                            System.out.println("Error while sending...: " + e.getMessage());
+                            throw new RuntimeException(e);
+                        }
+                    }
+                } else if(option == 2) {
+                    for (PriorityQueueElement priorityQueueElement : pq) {
+                        System.out.println(priorityQueueElement);
+                    }
+                } else if(option == 3) {
+                    System.exit(0);
+                }
+            }
+        });
+
+        currentThread.start();
+        threads.add(currentThread);
+    }
+
+   public void waitForThreads() {
+
+       for (Thread thread : threads) {
+           try {
+               thread.join();
+           } catch (InterruptedException e) {
+               System.out.println("Error while joining the threads: ");
+               throw new RuntimeException(e);
+           }
+       }
+   }
 
 }

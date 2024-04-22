@@ -38,5 +38,7 @@ public class Main {
         }
 
         lamportMutualExclusion.startListening();
+        lamportMutualExclusion.startEventGeneration();
+        lamportMutualExclusion.waitForThreads();
     }
 }
