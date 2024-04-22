@@ -1,21 +1,7 @@
 package model;
 
-public class PriorityQueueElement implements Comparable<PriorityQueueElement > {
-    private final int timeStamp;
-    private final PeerInformation peerInformation;
-
-    public PriorityQueueElement(int timeStamp, PeerInformation peerInformation) {
-        this.timeStamp = timeStamp;
-        this.peerInformation = peerInformation;
-    }
-
-    public int getTimeStamp() {
-        return timeStamp;
-    }
-
-    public PeerInformation getPeerInformation() {
-        return peerInformation;
-    }
+public record PriorityQueueElement(int timeStamp,
+                                   PeerInformation peerInformation) implements Comparable<PriorityQueueElement> {
 
     @Override
     public int compareTo(PriorityQueueElement other) {

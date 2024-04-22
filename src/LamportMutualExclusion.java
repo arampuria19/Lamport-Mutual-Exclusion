@@ -54,7 +54,7 @@ public class LamportMutualExclusion {
 
     private boolean canGoCritical() {
         assert pq.peek() != null;
-        return ((replies == peerInformationList.size()) && (pq.peek().getPeerInformation().ipAddress().equals(this.localIpAddress)));
+        return ((replies == peerInformationList.size()) && (pq.peek().peerInformation().ipAddress().equals(this.localIpAddress)));
     }
 
     private void executeCS() {
