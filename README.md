@@ -13,7 +13,7 @@ and the other for listening and receiving events. Synchronization between the se
 Our implementation uses sockets to communicate using the TCP protocol to exchange the messages. These messages are of three kinds:
 1. Request: A process which wants to access the critical section sends this message to every other connected peer, requesting the critical section.
 2. Reply: A process responds to the request message with a reply after adding the request in it's priority queue.
-3. Open: A process sends the open message when it releases the critical section.
+3. Release/Open: A process sends the release/open message when it releases the critical section.
 
 For ordering we use timestamps produced by Lamport's logical clock. We use the timestamps to compare the elements in the priority queue.
 
